@@ -30,9 +30,9 @@ public class ChordLookup {
 		// ask this node to find the successor of key
 		
 		// get the successor of the node
-		
+		NodeInterface nodeSuccessor = node.getSuccessor();
 		// get the stub for this successor (Util.getProcessStub())
-		
+		NodeInterface stub = Util.getProcessStub(nodeSuccessor.getNodeName(), nodeSuccessor.getPort());
 		// check that key is a member of the set {nodeid+1,...,succID} i.e. (nodeid+1 <= key <= succID) using the ComputeLogic
 		
 		// if logic returns true, then return the successor
@@ -40,7 +40,15 @@ public class ChordLookup {
 		// if logic returns false; call findHighestPredecessor(key)
 		
 		// do return highest_pred.findSuccessor(key) - This is a recursive call until logic returns true
-				
+		
+		if(stub != null) {
+			if(Util.computeLogic(key, node.getNodeID().add(new BigInteger("1")), nodeSuccessor.getNodeID())) {
+				return nodeSuccessor;
+			} else {
+				NodeInterface highest_pred = findHighestPredecessor(key);
+				return highest_pred.findSuccessor(key);
+			}
+		}
 		return null;					
 	}
 	
@@ -50,18 +58,30 @@ public class ChordLookup {
 	 * @return
 	 * @throws RemoteException
 	 */
+	@SuppressWarnings("unused")
 	private NodeInterface findHighestPredecessor(BigInteger key) throws RemoteException {
 		
 		// collect the entries in the finger table for this node
 		
+		List<NodeInterface> fingrTable = node.getFingerTable();
 		// starting from the last entry, iterate over the finger table
 		
+		for(int i = fingrTable.size() - 1; i>=0; i--) {
+			
 		// for each finger, obtain a stub from the registry
-		
+			NodeInterface finger = fingrTable.get(i);
+			NodeInterface fingrStub = Util.getProcessStub(finger.getNodeName(), finger.getPort());
+			
 		// check that finger is a member of the set {nodeID+1,...,ID-1} i.e. (nodeID+1 <= finger <= key-1) using the ComputeLogic
-		
 		// if logic returns true, then return the finger (means finger is the closest to key)
-		
+			BigInteger nodeIdplus1 = node.getNodeID().add(new BigInteger("1"));
+			BigInteger keymin1 = key.subtract(new BigInteger("1"));
+			
+			if(Util.computeLogic(fingrStub.getNodeID(), nodeIdplus1, keymin1)) {
+				return (NodeInterface) fingrStub;
+			}
+			
+		}
 		return (NodeInterface) node;			
 	}
 	
